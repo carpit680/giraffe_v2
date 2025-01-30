@@ -17,7 +17,7 @@ def read_odometry():
 if __name__ == "__main__":
     try:
         while True:
-            send_cmd_vel(0.5, 0.5)  
+            send_cmd_vel(0.0, 0.0)  
             read_odometry()
             time.sleep(1)
     except KeyboardInterrupt:
