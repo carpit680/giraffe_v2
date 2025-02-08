@@ -33,7 +33,7 @@ class DiffDriveSerial(Node):
             self.ser = None
 
         # Differential Drive Parameters
-        self.wheel_diameter = 0.10  # 10cm -> 0.10m
+        self.wheel_diameter = 0.0955  # 10cm -> 0.10m
         self.base_width = 0.24  # 24cm -> 0.24m
         self.wheel_radius = self.wheel_diameter / 2  # Radius of the wheel
 
