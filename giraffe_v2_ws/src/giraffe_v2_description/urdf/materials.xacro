@@ -1,0 +1,42 @@
+<?xml version="1.0" ?>
+<robot name="giraffe_v2" xmlns:xacro="http://www.ros.org/wiki/xacro" >
+
+<material name="silver_default">
+  <color rgba="0.700 0.700 0.700 1.000"/>
+</material>
+<material name="red">
+  <color rgba="1.0 0.0 0.0 1.0"/>
+</material>
+<material name="black">
+  <color rgba="0.0 0.0 0.0 1.0"/>
+</material>
+<material name="blue">
+  <color rgba="0.0 0.0 1.0 1.0"/>
+</material>
+
+<material name="opaque202209238">
+  <color rgba="0.792156862745098 0.8196078431372549 0.9333333333333333 1.0"/>
+</material>
+<material name="opaque190188186">
+  <color rgba="0.7450980392156863 0.7372549019607844 0.7294117647058823 1.0"/>
+</material>
+<material name="steel_satin">
+  <color rgba="0.6274509803921569 0.6274509803921569 0.6274509803921569 1.0"/>
+</material>
+<material name="opaque160160160">
+  <color rgba="0.6274509803921569 0.6274509803921569 0.6274509803921569 1.0"/>
+</material>
+<material name="plastic_texture_random">
+  <color rgba="0.09803921568627451 0.09803921568627451 0.09803921568627451 1.0"/>
+</material>
+<material name="opaque124124124">
+  <color rgba="0.48627450980392156 0.48627450980392156 0.48627450980392156 1.0"/>
+</material>
+<material name="polymide_kapton">
+  <color rgba="0.7843137254901961 0.5568627450980392 0.027450980392156862 1.0"/>
+</material>
+<material name="paint_enamel_glossy_blue">
+  <color rgba="0.18823529411764706 0.23137254901960785 0.5882352941176471 1.0"/>
+</material>
+
+</robot>

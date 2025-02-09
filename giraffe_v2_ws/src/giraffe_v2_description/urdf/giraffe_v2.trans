@@ -1,0 +1,48 @@
+<?xml version="1.0" ?>
+<robot name="giraffe_v2" xmlns:xacro="http://www.ros.org/wiki/xacro" >
+
+<transmission name="Rev6_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="Rev6">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="Rev6_actr">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<transmission name="Rev7_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="Rev7">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="Rev7_actr">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<transmission name="joint_wheel_right_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="joint_wheel_right">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="joint_wheel_right_actr">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<transmission name="joint_wheel_left_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="joint_wheel_left">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="joint_wheel_left_actr">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+</robot>

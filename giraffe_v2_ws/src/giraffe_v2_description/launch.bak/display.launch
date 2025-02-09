@@ -1,0 +1,28 @@
+<launch>
+
+  <arg name="model" default="$(find giraffe_v2_description)/urdf/giraffe_v2.xacro"/>
+  <arg name="gui" default="true"/>
+  <arg name="rvizconfig" default="$(find giraffe_v2_description)/launch/urdf.rviz"/>
+
+  <!-- <param name="robot_description" command="$(find xacro)/xacro $(arg model)"/>
+  <param name="use_gui" value="$(arg gui)"/> -->
+
+  <!-- Send fake joint values-->
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+    <param name="use_gui" value="false"/>
+  </node>
+
+  <!-- Send robot states to tf -->
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="false" output="screen"/>
+
+  <node name="rviz" pkg="rviz" args="-d $(arg rvizconfig)" type="rviz" required="true"/>
+
+   <!-- Map server -->
+  <arg name="map_file" default="$(find giraffe_v2_description)/maps/cafu_map.yaml"/>
+  <node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)" />
+
+  <!-- Place map frame at odometry frame -->
+  <!-- <node pkg="tf" type="static_transform_publisher" name="map_odom_broadcaster"
+      args="0 0 0 0 0 0 map odom 100"/> -->
+  
+</launch>

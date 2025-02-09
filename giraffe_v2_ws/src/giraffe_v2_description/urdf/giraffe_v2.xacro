@@ -1,0 +1,863 @@
+<?xml version="1.0" ?>
+<robot name="giraffe_v2" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+<!-- <xacro:include filename="$(find giraffe_v2_description)/urdf/materials.xacro" /> -->
+<!-- <xacro:include filename="$(find giraffe_v2_description)/urdf/giraffe_v2.trans" /> -->
+<!-- <xacro:include filename="$(find giraffe_v2_description)/urdf/giraffe_v2.gazebo" /> -->
+
+<xacro:property name="body_color" value="Gazebo/Red" />
+<xacro:property name="wheels" value="Gazebo/Black" />
+<xacro:property name="lidar" value="Gazebo/Blue" />
+
+<gazebo>
+  <plugin name="control" filename="libgazebo_ros_control.so"/>
+</gazebo>
+<gazebo reference="base_link">
+  <material>${body_color}</material>
+  <mu1>0.2</mu1>
+  <mu2>0.2</mu2>
+  <selfCollide>true</selfCollide>
+  <gravity>true</gravity>
+</gazebo>
+
+<gazebo reference="caster_base_1">
+  <material>${body_color}</material>
+  <mu1>0.2</mu1>
+  <mu2>0.2</mu2>
+  <selfCollide>true</selfCollide>
+</gazebo>
+
+<gazebo reference="motor_bracket_right_1">
+  <material>${wheels}</material>
+  <mu1>0.2</mu1>
+  <mu2>0.2</mu2>
+  <selfCollide>true</selfCollide>
+</gazebo>
+
+<gazebo reference="motor_bracket_left_1">
+  <material>${wheels}</material>
+  <mu1>0.2</mu1>
+  <mu2>0.2</mu2>
+  <selfCollide>true</selfCollide>
+</gazebo>
+
+<gazebo reference="motor_right_1">
+  <material>${body_color}</material>
+  <mu1>0.2</mu1>
+  <mu2>0.2</mu2>
+  <selfCollide>true</selfCollide>
+</gazebo>
+
+<gazebo reference="motor_left_1">
+  <material>${body_color}</material>
+  <mu1>0.2</mu1>
+  <mu2>0.2</mu2>
+  <selfCollide>true</selfCollide>
+</gazebo>
+
+<gazebo reference="caster_swivel_1">
+  <material>${body_color}</material>
+  <mu1>0.2</mu1>
+  <mu2>0.2</mu2>
+  <selfCollide>true</selfCollide>
+</gazebo>
+
+<gazebo reference="caster_wheel_1">
+  <material>${wheels}</material>
+  <mu1>0.2</mu1>
+  <mu2>0.2</mu2>
+  <selfCollide>true</selfCollide>
+</gazebo>
+
+<gazebo reference="wheel_right_1">
+  <material>${wheels}</material>
+  <mu1>0.2</mu1>
+  <mu2>0.2</mu2>
+  <selfCollide>true</selfCollide>
+</gazebo>
+
+<gazebo reference="wheel_left_1">
+  <material>${wheels}</material>
+  <mu1>0.2</mu1>
+  <mu2>0.2</mu2>
+  <selfCollide>true</selfCollide>
+</gazebo>
+
+<gazebo reference="t_slot1_1">
+  <material>${body_color}</material>
+  <mu1>0.2</mu1>
+  <mu2>0.2</mu2>
+  <selfCollide>true</selfCollide>
+</gazebo>
+
+<gazebo reference="t_slot3_1">
+  <material>${body_color}</material>
+  <mu1>0.2</mu1>
+  <mu2>0.2</mu2>
+  <selfCollide>true</selfCollide>
+</gazebo>
+
+<gazebo reference="base_plate2_1">
+  <material>${body_color}</material>
+  <mu1>0.2</mu1>
+  <mu2>0.2</mu2>
+  <selfCollide>true</selfCollide>
+</gazebo>
+
+<gazebo reference="cam_mount_t_slot_1">
+  <material>${wheels}</material>
+  <mu1>0.2</mu1>
+  <mu2>0.2</mu2>
+  <selfCollide>true</selfCollide>
+</gazebo>
+
+<gazebo reference="rpi_cam_mount_1">
+  <material>${wheels}</material>
+  <mu1>0.2</mu1>
+  <mu2>0.2</mu2>
+  <selfCollide>true</selfCollide>
+</gazebo>
+
+<gazebo reference="t_slot2_1">
+  <material>${body_color}</material>
+  <mu1>0.2</mu1>
+  <mu2>0.2</mu2>
+  <selfCollide>true</selfCollide>
+</gazebo>
+
+<gazebo reference="camera_1">
+  <material>${lidar}</material>
+  <mu1>0.2</mu1>
+  <mu2>0.2</mu2>
+  <selfCollide>true</selfCollide>
+</gazebo>
+
+<gazebo reference="rp_lidar_base_1">
+  <material>${wheels}</material>
+  <mu1>0.2</mu1>
+  <mu2>0.2</mu2>
+  <selfCollide>true</selfCollide>
+</gazebo>
+
+<gazebo reference="lidar_1">
+  <material>${lidar}</material>
+  <mu1>0.2</mu1>
+  <mu2>0.2</mu2>
+  <selfCollide>true</selfCollide>
+</gazebo>
+
+<!--Gazebo Differential Drive Plugin-->
+<gazebo>
+  <plugin name="differential_drive_controller" filename="libgazebo_ros_diff_drive.so">
+    <alwaysOn>true</alwaysOn>
+    <legacyMode>false</legacyMode>
+    <updateRate>100</updateRate>
+    <!-- <robotNamespace>/</robotNamespace>   -->
+    <rosDebugLevel>na</rosDebugLevel>
+    <leftJoint>joint_wheel_right</leftJoint>
+    <rightJoint>joint_wheel_left</rightJoint>
+    <wheelSeparation>0.282</wheelSeparation>
+    <wheelDiameter>0.095</wheelDiameter>
+    <robotBaseFrame>robot_footprint</robotBaseFrame>
+    <wheelAcceleration>1.0</wheelAcceleration>
+    <wheelTorque>5</wheelTorque>
+    <commandTopic>cmd_vel</commandTopic>
+    <odometrySource>encoder</odometrySource>
+    <odometryTopic>odom</odometryTopic>
+    <odometryFrame>odom</odometryFrame>
+    <publishTf>1</publishTf>
+    <publishOdom>true</publishOdom>
+    <publishOdomTF>true</publishOdomTF>
+    <publishWheelJointState>false</publishWheelJointState>
+    <publishWheelTF>false</publishWheelTF>
+  </plugin>
+</gazebo>
+
+<!-- <gazebo>
+    <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+        <robotNamespace>/</robotNamespace>
+    </plugin>
+</gazebo> -->
+
+<!-- hokuyo -->
+  <gazebo reference="lidar_1">
+    <material>${lidar}</material>
+    <sensor type="ray" name="head_hokuyo_sensor">
+      <pose>0 0 0 0 0 0</pose>
+      <visualize>false</visualize>
+      <update_rate>100</update_rate>
+      <ray>
+        <scan>
+          <horizontal>
+            <samples>1440</samples>
+            <resolution>1</resolution>
+            <!-- <min_angle>-1.570796</min_angle>
+            <max_angle>1.570796</max_angle> -->
+            <min_angle>-3.14</min_angle>
+            <max_angle>3.14</max_angle>
+          </horizontal>
+        </scan>
+        <range>
+          <min>0.10</min>
+          <max>30.0</max>
+          <resolution>0.01</resolution>
+        </range>
+        <noise>
+          <type>gaussian</type>
+          <mean>0.0</mean>
+          <stddev>0.01</stddev>
+        </noise>
+      </ray>
+      <plugin name="gazebo_ros_head_hokuyo_controller" filename="libgazebo_ros_laser.so">
+        <topicName>/laser/scan</topicName>
+        <frameName>lidar_1</frameName>
+      </plugin>
+    </sensor>
+  </gazebo>
+
+  <!-- camera -->
+  <gazebo reference="camera_1">
+    <sensor type="camera" name="camera1">
+      <update_rate>15.0</update_rate>
+      <camera name="head">
+        <horizontal_fov>1.3962634</horizontal_fov>
+        <image>
+          <width>480</width>
+          <height>480</height>
+          <format>R8G8B8</format>
+        </image>
+        <clip>
+          <near>0.02</near>
+          <far>300</far>
+        </clip>
+        <noise>
+          <type>gaussian</type>
+          <!-- Noise is sampled independently per pixel on each frame.
+               That pixel's noise value is added to each of its color
+               channels, which at that point lie in the range [0,1]. -->
+          <mean>0.0</mean>
+          <stddev>0.007</stddev>
+        </noise>
+      </camera>
+
+      <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
+        <alwaysOn>true</alwaysOn>
+        <updateRate>0.0</updateRate>
+        <cameraName>camera</cameraName>
+        <imageTopicName>rgb/image_raw</imageTopicName>
+        <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+        <frameName>camera_link</frameName>
+        <hackBaseline>0.07</hackBaseline>
+        <distortionK1>0.0</distortionK1>
+        <distortionK2>0.0</distortionK2>
+        <distortionK3>0.0</distortionK3>
+        <distortionT1>0.0</distortionT1>
+        <distortionT2>0.0</distortionT2>
+      </plugin>
+    </sensor>
+  </gazebo>
+
+<transmission name="Rev6_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="Rev6">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="Rev6_actr">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<transmission name="Rev7_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="Rev7">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="Rev7_actr">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<transmission name="joint_wheel_right_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="joint_wheel_right">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="joint_wheel_right_actr">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<transmission name="joint_wheel_left_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="joint_wheel_left">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="joint_wheel_left_actr">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+
+<material name="silver_default">
+  <color rgba="0.700 0.700 0.700 1.000"/>
+</material>
+<material name="red">
+  <color rgba="1.0 0.0 0.0 1.0"/>
+</material>
+<material name="black">
+  <color rgba="0.0 0.0 0.0 1.0"/>
+</material>
+<material name="blue">
+  <color rgba="0.0 0.0 1.0 1.0"/>
+</material>
+
+<material name="opaque202209238">
+  <color rgba="0.792156862745098 0.8196078431372549 0.9333333333333333 1.0"/>
+</material>
+<material name="opaque190188186">
+  <color rgba="0.7450980392156863 0.7372549019607844 0.7294117647058823 1.0"/>
+</material>
+<material name="steel_satin">
+  <color rgba="0.6274509803921569 0.6274509803921569 0.6274509803921569 1.0"/>
+</material>
+<material name="opaque160160160">
+  <color rgba="0.6274509803921569 0.6274509803921569 0.6274509803921569 1.0"/>
+</material>
+<material name="plastic_texture_random">
+  <color rgba="0.09803921568627451 0.09803921568627451 0.09803921568627451 1.0"/>
+</material>
+<material name="opaque124124124">
+  <color rgba="0.48627450980392156 0.48627450980392156 0.48627450980392156 1.0"/>
+</material>
+<material name="polymide_kapton">
+  <color rgba="0.7843137254901961 0.5568627450980392 0.027450980392156862 1.0"/>
+</material>
+<material name="paint_enamel_glossy_blue">
+  <color rgba="0.18823529411764706 0.23137254901960785 0.5882352941176471 1.0"/>
+</material>
+
+<link name="robot_footprint"></link>
+
+  <joint name="robot_footprint_joint" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 3.1415" />
+    <parent link="robot_footprint" />
+    <child link="base_link" />
+  </joint>
+
+
+<link name="base_link">
+  <inertial>
+    <origin xyz="-4.796163466380677e-16 1.9539925233402755e-16 0.10393160044132378" rpy="0 0 0"/>
+    <mass value="0.98125"/>
+    <inertia ixx="0.005111" iyy="0.005111" izz="0.010221" ixy="-0.0" iyz="-0.0" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://giraffe_v2_description/meshes/base_link.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="steel_satin"/>
+  </visual>
+  <collision>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://giraffe_v2_description/meshes/base_link.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="caster_base_1">
+  <inertial>
+    <origin xyz="-0.02999999999971513 1.8900927366518936e-14 -0.0038349761760002182" rpy="0 0 0"/>
+    <mass value="0.0917282783950747"/>
+    <inertia ixx="2.2e-05" iyy="2.2e-05" izz="4.3e-05" ixy="0.0" iyz="-0.0" ixz="-0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.125 0.0 -0.102932" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://giraffe_v2_description/meshes/caster_base_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="opaque202209238"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.125 0.0 -0.102932" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://giraffe_v2_description/meshes/caster_base_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="motor_bracket_right_1">
+  <inertial>
+    <origin xyz="0.030000003524820004 0.025528789360168294 -0.016206113320865453" rpy="0 0 0"/>
+    <mass value="0.3643719570137635"/>
+    <inertia ixx="0.000267" iyy="0.000274" izz="0.000354" ixy="0.0" iyz="-6.2e-05" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="0.125 0.125 -0.102932" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://giraffe_v2_description/meshes/motor_bracket_right_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="opaque190188186"/>
+  </visual>
+  <collision>
+    <origin xyz="0.125 0.125 -0.102932" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://giraffe_v2_description/meshes/motor_bracket_right_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="motor_bracket_left_1">
+  <inertial>
+    <origin xyz="0.02999990480282659 -0.025528740015670695 -0.016206180023097885" rpy="0 0 0"/>
+    <mass value="0.3643727771526281"/>
+    <inertia ixx="0.000267" iyy="0.000274" izz="0.000354" ixy="0.0" iyz="6.2e-05" ixz="-0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="0.125 -0.125 -0.102932" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://giraffe_v2_description/meshes/motor_bracket_left_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="opaque190188186"/>
+  </visual>
+  <collision>
+    <origin xyz="0.125 -0.125 -0.102932" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://giraffe_v2_description/meshes/motor_bracket_left_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="motor_right_1">
+  <inertial>
+    <origin xyz="-9.444231106772727e-05 0.03104148970877718 0.006615539375494729" rpy="0 0 0"/>
+    <mass value="0.5168920990115669"/>
+    <inertia ixx="0.000226" iyy="8.4e-05" izz="0.000226" ixy="1e-06" iyz="1e-06" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="0.095 0.122 -0.056315" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://giraffe_v2_description/meshes/motor_right_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="opaque160160160"/>
+  </visual>
+  <collision>
+    <origin xyz="0.095 0.122 -0.056315" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://giraffe_v2_description/meshes/motor_right_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="motor_left_1">
+  <inertial>
+    <origin xyz="9.444231106618683e-05 -0.031041489708776154 0.006615539375494743" rpy="0 0 0"/>
+    <mass value="0.5168920990115669"/>
+    <inertia ixx="0.000226" iyy="8.4e-05" izz="0.000226" ixy="1e-06" iyz="-1e-06" ixz="-0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="0.095 -0.122 -0.056315" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://giraffe_v2_description/meshes/motor_left_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="opaque160160160"/>
+  </visual>
+  <collision>
+    <origin xyz="0.095 -0.122 -0.056315" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://giraffe_v2_description/meshes/motor_left_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="caster_swivel_1">
+  <inertial>
+    <origin xyz="-0.013828745942954426 -0.000273772921428376 -0.025139770099941672" rpy="0 0 0"/>
+    <mass value="0.10596308649748981"/>
+    <inertia ixx="6.4e-05" iyy="6.3e-05" izz="5.5e-05" ixy="-0.0" iyz="-1e-06" ixz="-1.8e-05"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.095 -0.0 -0.094032" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://giraffe_v2_description/meshes/caster_swivel_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="opaque202209238"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.095 -0.0 -0.094032" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://giraffe_v2_description/meshes/caster_swivel_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="caster_wheel_1">
+  <inertial>
+    <origin xyz="-5.0487392044828994e-14 -1.9924083382511348e-08 -3.995586762978176e-07" rpy="0 0 0"/>
+    <mass value="0.526930173830938"/>
+    <inertia ixx="0.000248" iyy="0.00045" izz="0.000248" ixy="0.0" iyz="-0.0" ixz="-0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.0665 0.0 -0.041532" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://giraffe_v2_description/meshes/caster_wheel_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="opaque202209238"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.0665 0.0 -0.041532" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://giraffe_v2_description/meshes/caster_wheel_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="wheel_right_1">
+  <inertial>
+    <origin xyz="1.452855521305585e-07 0.0013778021859073009 -4.6841048271378805e-07" rpy="0 0 0"/>
+    <mass value="0.5465183547417811"/>
+    <inertia ixx="0.000606" iyy="0.001184" izz="0.000606" ixy="0.0" iyz="0.0" ixz="-0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="0.095106 0.1442 -0.05639" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://giraffe_v2_description/meshes/wheel_right_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="plastic_texture_random"/>
+  </visual>
+  <collision>
+    <origin xyz="0.095106 0.1442 -0.05639" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://giraffe_v2_description/meshes/wheel_right_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="wheel_left_1">
+  <inertial>
+    <origin xyz="-1.625088952295073e-14 -0.0013778021859060796 -4.794927937618043e-07" rpy="0 0 0"/>
+    <mass value="0.5465183547417811"/>
+    <inertia ixx="0.000606" iyy="0.001184" izz="0.000606" ixy="-0.0" iyz="0.0" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="0.095 -0.1442 -0.056315" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://giraffe_v2_description/meshes/wheel_left_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="plastic_texture_random"/>
+  </visual>
+  <collision>
+    <origin xyz="0.095 -0.1442 -0.056315" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://giraffe_v2_description/meshes/wheel_left_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="t_slot1_1">
+  <inertial>
+    <origin xyz="-0.01000000000000105 0.010000000000014553 0.04999960044132379" rpy="0 0 0"/>
+    <mass value="0.14328636100309275"/>
+    <inertia ixx="0.000125" iyy="0.000125" izz="1.2e-05" ixy="0.0" iyz="0.0" ixz="-0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.125 0.125 -0.104932" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://giraffe_v2_description/meshes/t_slot1_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="opaque202209238"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.125 0.125 -0.104932" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://giraffe_v2_description/meshes/t_slot1_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="t_slot3_1">
+  <inertial>
+    <origin xyz="0.009999999999999662 1.4880319199050973e-14 0.04999960044132379" rpy="0 0 0"/>
+    <mass value="0.14328636100309275"/>
+    <inertia ixx="0.000125" iyy="0.000125" izz="1.2e-05" ixy="0.0" iyz="0.0" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="0.125 -0.0 -0.104932" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://giraffe_v2_description/meshes/t_slot3_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="opaque202209238"/>
+  </visual>
+  <collision>
+    <origin xyz="0.125 -0.0 -0.104932" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://giraffe_v2_description/meshes/t_slot3_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="base_plate2_1">
+  <inertial>
+    <origin xyz="0.11499999999999969 -5.3290705182007506e-17 0.000999600441323828" rpy="0 0 0"/>
+    <mass value="0.98125"/>
+    <inertia ixx="0.005111" iyy="0.005111" izz="0.010221" ixy="0.0" iyz="0.0" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="0.115 -0.0 -0.204932" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://giraffe_v2_description/meshes/base_plate2_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="steel_satin"/>
+  </visual>
+  <collision>
+    <origin xyz="0.115 -0.0 -0.204932" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://giraffe_v2_description/meshes/base_plate2_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="cam_mount_t_slot_1">
+  <inertial>
+    <origin xyz="-0.003921359628293264 -0.008000000000091259 -3.995008183432791e-07" rpy="0 0 0"/>
+    <mass value="0.017431891556491923"/>
+    <inertia ixx="1e-06" iyy="1e-06" izz="1e-06" ixy="-0.0" iyz="0.0" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="0.125 -0.008 -0.154932" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://giraffe_v2_description/meshes/cam_mount_t_slot_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="steel_satin"/>
+  </visual>
+  <collision>
+    <origin xyz="0.125 -0.008 -0.154932" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://giraffe_v2_description/meshes/cam_mount_t_slot_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="rpi_cam_mount_1">
+  <inertial>
+    <origin xyz="-0.0010573829890447306 -0.00570000106511694 0.027542370308136083" rpy="0 0 0"/>
+    <mass value="0.11200083792506804"/>
+    <inertia ixx="3.6e-05" iyy="2e-05" izz="1.9e-05" ixy="0.0" iyz="0.0" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="0.134528 -0.0057 -0.154932" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://giraffe_v2_description/meshes/rpi_cam_mount_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="steel_satin"/>
+  </visual>
+  <collision>
+    <origin xyz="0.134528 -0.0057 -0.154932" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://giraffe_v2_description/meshes/rpi_cam_mount_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="t_slot2_1">
+  <inertial>
+    <origin xyz="-0.01000000000000105 -0.010000000000014525 0.04999960044132376" rpy="0 0 0"/>
+    <mass value="0.1432863610030928"/>
+    <inertia ixx="0.000125" iyy="0.000125" izz="1.2e-05" ixy="-0.0" iyz="-0.0" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.125 -0.125 -0.104932" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://giraffe_v2_description/meshes/t_slot2_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="opaque202209238"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.125 -0.125 -0.104932" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://giraffe_v2_description/meshes/t_slot2_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="camera_1">
+  <inertial>
+    <origin xyz="-0.002500003613538554 -0.01274999996274657 -3.9940966439777625e-07" rpy="0 0 0"/>
+    <mass value="0.02502187499999987"/>
+    <inertia ixx="3e-06" iyy="1e-06" izz="1e-06" ixy="-0.0" iyz="0.0" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="0.138528 -0.01275 -0.182932" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://giraffe_v2_description/meshes/camera_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="paint_enamel_glossy_blue"/>
+  </visual>
+  <collision>
+    <origin xyz="0.138528 -0.01275 -0.182932" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://giraffe_v2_description/meshes/camera_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="rp_lidar_base_1">
+  <inertial>
+    <origin xyz="-0.026066176078450097 5.169154388440233e-06 0.028925780464884504" rpy="0 0 0"/>
+    <mass value="0.3390274471738879"/>
+    <inertia ixx="0.00011" iyy="0.000286" izz="0.00035" ixy="0.0" iyz="0.0" ixz="-2e-06"/>
+  </inertial>
+  <visual>
+    <origin xyz="0.0 0.0 -0.206932" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://giraffe_v2_description/meshes/rp_lidar_base_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="opaque124124124"/>
+  </visual>
+  <collision>
+    <origin xyz="0.0 0.0 -0.206932" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://giraffe_v2_description/meshes/rp_lidar_base_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="lidar_1">
+  <inertial>
+    <origin xyz="-1.8735013540549517e-16 4.3728909382423355e-16 0.014472365809006849" rpy="0 0 0"/>
+    <mass value="0.7971963315816206"/>
+    <inertia ixx="0.000273" iyy="0.000273" izz="0.000433" ixy="0.0" iyz="0.0" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="0.0455 -0.0 -0.248444" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://giraffe_v2_description/meshes/lidar_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="polymide_kapton"/>
+  </visual>
+  <collision>
+    <origin xyz="0.0455 -0.0 -0.248444" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://giraffe_v2_description/meshes/lidar_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<joint name="Rigid1" type="fixed">
+  <origin xyz="0.125 0.0 0.102932" rpy="0 0 0"/>
+  <parent link="base_link"/>
+  <child link="caster_base_1"/>
+</joint>
+
+<joint name="Rigid2" type="fixed">
+  <origin xyz="-0.065 -0.125 0.102932" rpy="0 0 3.1415"/>
+  <parent link="base_link"/>
+  <child link="motor_bracket_left_1"/>
+</joint>
+
+<joint name="Rigid3" type="fixed">
+  <origin xyz="-0.065 0.125 0.102932" rpy="0 0 3.1415"/>
+  <parent link="base_link"/>
+  <child link="motor_bracket_right_1"/>
+</joint>
+
+<joint name="Rigid4" type="fixed">
+  <origin xyz="0.03 0.003 -0.046617" rpy="0 0 0"/>
+  <parent link="motor_bracket_right_1"/>
+  <child link="motor_right_1"/>
+</joint>
+
+<joint name="Rigid5" type="fixed">
+  <origin xyz="0.03 -0.003 -0.046617" rpy="0 0 0"/>
+  <parent link="motor_bracket_left_1"/>
+  <child link="motor_left_1"/>
+</joint>
+
+<joint name="Rev6" type="continuous">
+  <origin xyz="-0.03 0.0 -0.0089" rpy="0 0 0"/>
+  <parent link="caster_base_1"/>
+  <child link="caster_swivel_1"/>
+  <axis xyz="0.0 -0.0 -1.0"/>
+</joint>
+
+<joint name="Rev7" type="continuous">
+  <origin xyz="-0.0285 -0.0 -0.0525" rpy="0 0 0"/>
+  <parent link="caster_swivel_1"/>
+  <child link="caster_wheel_1"/>
+  <axis xyz="0.0 1.0 -0.0"/>
+</joint>
+
+<joint name="joint_wheel_right" type="continuous">
+  <origin xyz="-0.000106 -0.0222 7.5e-05" rpy="0 0 0"/>
+  <parent link="motor_right_1"/>
+  <child link="wheel_right_1"/>
+  <axis xyz="0.0 -1.0 0.0"/>
+</joint>
+
+<joint name="joint_wheel_left" type="continuous">
+  <origin xyz="0.0 0.0222 0.0" rpy="0 0 0"/>
+  <parent link="motor_left_1"/>
+  <child link="wheel_left_1"/>
+  <axis xyz="0.0 -1.0 0.0"/>
+</joint>
+
+<joint name="Rigid10" type="fixed">
+  <origin xyz="0.125 -0.125 0.104932" rpy="0 0 0"/>
+  <parent link="base_link"/>
+  <child link="t_slot1_1"/>
+</joint>
+
+<joint name="Rigid11" type="fixed">
+  <origin xyz="-0.125 0.0 0.104932" rpy="0 0 0"/>
+  <parent link="base_link"/>
+  <child link="t_slot3_1"/>
+</joint>
+
+<joint name="Rigid12" type="fixed">
+  <origin xyz="0.01 0.0 0.1" rpy="0 0 0"/>
+  <parent link="t_slot3_1"/>
+  <child link="base_plate2_1"/>
+</joint>
+
+<joint name="Rigid15" type="fixed">
+  <origin xyz="0.0 0.008 0.05" rpy="0 0 0"/>
+  <parent link="t_slot3_1"/>
+  <child link="cam_mount_t_slot_1"/>
+</joint>
+
+<joint name="Rigid16" type="fixed">
+  <origin xyz="-0.009528 -0.0023 0.0" rpy="0 0 0"/>
+  <parent link="cam_mount_t_slot_1"/>
+  <child link="rpi_cam_mount_1"/>
+</joint>
+
+<joint name="Rigid21" type="fixed">
+  <origin xyz="0.125 0.125 0.104932" rpy="0 0 0"/>
+  <parent link="base_link"/>
+  <child link="t_slot2_1"/>
+</joint>
+
+<joint name="Rigid22" type="fixed">
+  <origin xyz="-0.004 0.00705 0.028" rpy="0 0 3.1415"/>
+  <parent link="rpi_cam_mount_1"/>
+  <child link="camera_1"/>
+</joint>
+
+<joint name="Rigid23" type="fixed">
+  <origin xyz="0.160 -0.0 0.002" rpy="0 0 0"/>
+  <parent link="base_plate2_1"/>
+  <child link="rp_lidar_base_1"/>
+</joint>
+
+<joint name="Rigid24" type="fixed">
+  <origin xyz="-0.0455 0.0 0.041512" rpy="0 0 0"/>
+  <parent link="rp_lidar_base_1"/>
+  <child link="lidar_1"/>
+</joint>
+
+</robot>
