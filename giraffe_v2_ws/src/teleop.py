@@ -1,7 +1,6 @@
 import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import Twist
-# from nav_msgs.msg import Odometry
 import serial
 import time
 
@@ -17,7 +16,7 @@ class DiffDriveSerial(Node):
             10  # Queue size
         )
 
-        # ROS2 Publisher for odometry
+        # ROS2 Publisher for odometry (commented out)
         # self.odom_publisher = self.create_publisher(Odometry, 'odom', 10)
 
         # Serial Communication Setup
@@ -33,13 +32,15 @@ class DiffDriveSerial(Node):
             self.ser = None
 
         # Differential Drive Parameters
-        self.wheel_diameter = 0.0955  # 10cm -> 0.10m
-        self.base_width = 0.24  # 24cm -> 0.24m
-        self.wheel_radius = self.wheel_diameter / 2  # Radius of the wheel
+        self.wheel_diameter = 0.0955   # e.g., 9.55cm wheel diameter
+        self.base_width = 0.24         # 24cm between wheels
+        self.wheel_radius = self.wheel_diameter / 2
 
-        # Acceleration limits (m/s^2)
-        self.max_linear_accel = 0.5  # Max linear acceleration
-        self.max_angular_accel = 1.0  # Max angular acceleration
+        # Acceleration and Deceleration limits (m/s^2 and rad/s^2)
+        self.max_linear_accel = 0.5    # maximum linear acceleration
+        self.max_linear_decel = 0.7    # maximum linear deceleration (can be higher)
+        self.max_angular_accel = 1.0   # maximum angular acceleration
+        self.max_angular_decel = 1.2   # maximum angular deceleration
 
         # Last known velocities
         self.last_linear_x = 0.0
@@ -56,7 +57,7 @@ class DiffDriveSerial(Node):
         """Callback function to process cmd_vel and send wheel speeds over serial."""
         current_time = time.time()
         self.last_cmd_time = current_time
-        
+
         if not self.initialized:
             self.last_time = current_time
             self.last_linear_x = 0.0
@@ -66,12 +67,26 @@ class DiffDriveSerial(Node):
         dt = current_time - self.last_time
         self.last_time = current_time
 
-        target_linear_x = msg.linear.x  # Target forward velocity (m/s)
-        target_angular_z = msg.angular.z  # Target rotational velocity (rad/s)
+        target_linear_x = msg.linear.x   # Target forward velocity (m/s)
+        target_angular_z = msg.angular.z   # Target rotational velocity (rad/s)
 
-        # Apply acceleration limits
-        linear_x = self.last_linear_x + max(min(target_linear_x - self.last_linear_x, self.max_linear_accel * dt), -self.max_linear_accel * dt)
-        angular_z = self.last_angular_z + max(min(target_angular_z - self.last_angular_z, self.max_angular_accel * dt), -self.max_angular_accel * dt)
+        # Apply separate acceleration or deceleration limits for linear velocity
+        delta_linear = target_linear_x - self.last_linear_x
+        if delta_linear > 0:
+            # Accelerating
+            delta_linear = min(delta_linear, self.max_linear_accel * dt)
+        else:
+            # Decelerating
+            delta_linear = max(delta_linear, -self.max_linear_decel * dt)
+        linear_x = self.last_linear_x + delta_linear
+
+        # Apply separate acceleration or deceleration limits for angular velocity
+        delta_angular = target_angular_z - self.last_angular_z
+        if delta_angular > 0:
+            delta_angular = min(delta_angular, self.max_angular_accel * dt)
+        else:
+            delta_angular = max(delta_angular, -self.max_angular_decel * dt)
+        angular_z = self.last_angular_z + delta_angular
 
         self.last_linear_x = linear_x
         self.last_angular_z = angular_z
@@ -79,14 +94,28 @@ class DiffDriveSerial(Node):
         self.send_wheel_velocities(linear_x, angular_z)
 
     def check_cmd_vel_timeout(self):
-        """Check if no cmd_vel message is received and decelerate to zero."""
+        """If no cmd_vel message is received for a timeout period, decelerate to zero using deceleration limits."""
         current_time = time.time()
         dt = current_time - self.last_time
-        timeout = 2/30  # Timeout duration in seconds
+        # Timeout duration (for example, 2/30 seconds)
+        timeout = 2/30
 
         if current_time - self.last_cmd_time > timeout:
-            linear_x = max(self.last_linear_x - self.max_linear_accel * dt, 0.0) if self.last_linear_x > 0 else min(self.last_linear_x + self.max_linear_accel * dt, 0.0)
-            angular_z = max(self.last_angular_z - self.max_angular_accel * dt, 0.0) if self.last_angular_z > 0 else min(self.last_angular_z + self.max_angular_accel * dt, 0.0)
+            # Decelerate linear velocity to 0
+            if self.last_linear_x > 0:
+                linear_x = max(self.last_linear_x - self.max_linear_decel * dt, 0.0)
+            elif self.last_linear_x < 0:
+                linear_x = min(self.last_linear_x + self.max_linear_decel * dt, 0.0)
+            else:
+                linear_x = 0.0
+
+            # Decelerate angular velocity to 0
+            if self.last_angular_z > 0:
+                angular_z = max(self.last_angular_z - self.max_angular_decel * dt, 0.0)
+            elif self.last_angular_z < 0:
+                angular_z = min(self.last_angular_z + self.max_angular_decel * dt, 0.0)
+            else:
+                angular_z = 0.0
 
             self.last_linear_x = linear_x
             self.last_angular_z = angular_z
@@ -102,23 +131,21 @@ class DiffDriveSerial(Node):
                 try:
                     data = data.replace(',', ' ')
                     left_vel, right_vel = map(float, data.split())
-                    # odom_msg = Odometry()
-                    # odom_msg.twist.twist.linear.x = (left_vel + right_vel) / 2
-                    # odom_msg.twist.twist.angular.z = (right_vel - left_vel) / self.base_width
-                    # self.odom_publisher.publish(odom_msg)
+                    # Here you could publish an Odometry message if desired.
                 except ValueError:
                     self.get_logger().warn(f"⚠️ Invalid odometry data received: {data}")
 
     def send_wheel_velocities(self, linear_x, angular_z):
         """Calculate and send wheel velocities over serial."""
-        left_wheel_vel = (linear_x - (angular_z * self.base_width / 2))
-        right_wheel_vel = (linear_x + (angular_z * self.base_width / 2))
+        left_wheel_vel = linear_x - (angular_z * self.base_width / 2)
+        right_wheel_vel = linear_x + (angular_z * self.base_width / 2)
 
+        # Format the command with start and end markers.
         cmd = f"<{left_wheel_vel:.1f} {right_wheel_vel:.1f}>"
 
         if self.ser:
             self.ser.write(cmd.encode())
-            self.ser.flush()
+            self.ser.flush()  # Flush the serial buffer
             self.get_logger().info(f"Sent to serial: {cmd.strip()}")
         else:
             self.get_logger().warn(f"❌ Serial port not available, vel: {cmd}")

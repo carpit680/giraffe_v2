@@ -39,11 +39,11 @@
 #define WHEEL_DIAMETER 0.0955
 
 float kp_left = 2.0;
-float ki_left = 1.5;
+float ki_left = 2.0;
 float kd_left = 0.01;
 
 float kp_right = 2.0;
-float ki_right = 1.5;
+float ki_right = 2.0;
 float kd_right = 0.01;
 
 float setpoint_left = 0;  // desired velocity in m/s
@@ -90,6 +90,8 @@ void updatePID(float current_velocity_left, float current_velocity_right, float 
     if (new_duty_left < -100) new_duty_left = -100;
     if (new_duty_right > 100) new_duty_right = 100;
     if (new_duty_right < -100) new_duty_right = -100;
+    if ((new_duty_left < 10) && (new_duty_left > -10)) new_duty_left = 0;
+    if ((new_duty_right < 10) && (new_duty_right > -10)) new_duty_right = 0;
 
     // Use mutex to update the shared duty cycle variables safely
     xSemaphoreTake(dutyCycleMutex, portMAX_DELAY);
