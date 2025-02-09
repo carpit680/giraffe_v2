@@ -2,13 +2,14 @@
 #include "esp_attr.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "freertos/semphr.h"   // Include the semaphore header
 #include "esp_log.h"
 #include "rotary_encoder.h"
 #include "driver/mcpwm.h"
 #include "driver/gpio.h"
 #include "driver/uart.h"
 #include "esp_timer.h" 
-
+#include <math.h>
 
 ///////PIN BINDINGS///////
 // Left Motor         ////
@@ -19,7 +20,7 @@
 //////////////////////////
 // Right Motor        ////
 // PWM_FWD: D12       ////
-// PWM_REV: D13        ////
+// PWM_REV: D13       ////
 // EncA: D23          ////
 // EncB: D22          ////
 //////////////////////////
@@ -37,56 +38,64 @@
 #define UART_NUM UART_NUM_0
 #define WHEEL_DIAMETER 0.0955
 
-double kp_left = 1.2;
-double ki_left = 0.4;
-double kd_left = 0;
+float kp_left = 2.0;
+float ki_left = 1.5;
+float kd_left = 0.01;
 
-double kp_right = 1.2;
-double ki_right = 0.4;
-double kd_right = 0;
+float kp_right = 2.0;
+float ki_right = 1.5;
+float kd_right = 0.01;
 
-double setpoint_left = 0;  // desired velocity in m/s
-double setpoint_right = 0; // desired velocity in m/s
-double error_left;
-double error_right;
-double prev_error_left = 0;
-double prev_error_right = 0;
-double integral_left = 0;
-double integral_right = 0;
-double derivative_left;
-double derivative_right;
-double duty_cycle_left;
-double duty_cycle_right;
+float setpoint_left = 0;  // desired velocity in m/s
+float setpoint_right = 0; // desired velocity in m/s
+float error_left;
+float error_right;
+float prev_error_left = 0;
+float prev_error_right = 0;
+float integral_left = 0;
+float integral_right = 0;
+float derivative_left;
+float derivative_right;
 
+// These are shared between tasks so we protect them with a mutex
+float duty_cycle_left;
+float duty_cycle_right;
 
-void updatePID(double current_velocity_left, double current_velocity_right) {
-    // Calculate errors
+// Declare a global mutex handle
+SemaphoreHandle_t dutyCycleMutex = NULL;
+
+void updatePID(float current_velocity_left, float current_velocity_right, float dt) {
+    // Compute errors (adjust sign if needed for your hardware)
     error_left = setpoint_left - current_velocity_left;
     error_right = setpoint_right - current_velocity_right;
 
-    // Update integral terms
-    integral_left += error_left;
-    integral_right += error_right;
+    // Update integral (using dt) and derivative terms
+    integral_left += error_left * dt;
+    integral_right += error_right * dt;
+    derivative_left = (error_left - prev_error_left) / dt;
+    derivative_right = (error_right - prev_error_right) / dt;
 
-    // Calculate derivatives
-    derivative_left = error_left - prev_error_left;
-    derivative_right = error_right - prev_error_right;
+    float pid_output_left = kp_left * error_left + ki_left * integral_left + kd_left * derivative_left;
+    float pid_output_right = kp_right * error_right + ki_right * integral_right + kd_right * derivative_right;
 
-    // PID controller output
-    double pid_output_left = kp_left * error_left + ki_left * integral_left + kd_left * derivative_left;
-    double pid_output_right = kp_right * error_right + ki_right * integral_right + kd_right * derivative_right;
-
-    // Update previous errors
     prev_error_left = error_left;
     prev_error_right = error_right;
 
-    // Convert PID output (desired RPM) to duty cycle
-    duty_cycle_left = (pid_output_left / MAX_VEL) * 100.0;
-    duty_cycle_right = (pid_output_right / MAX_VEL) * 100.0;
+    // Convert output to a duty cycle percentage
+    float new_duty_left = (pid_output_left / MAX_VEL) * 100.0;
+    float new_duty_right = (pid_output_right / MAX_VEL) * 100.0;
 
-    // Constrain duty cycles between -100% and 100%
-    duty_cycle_left = duty_cycle_left > 100 ? 100 : (duty_cycle_left < -100 ? -100 : duty_cycle_left);
-    duty_cycle_right = duty_cycle_right > 100 ? 100 : (duty_cycle_right < -100 ? -100 : duty_cycle_right);
+    // Clamp between -100% and 100%
+    if (new_duty_left > 100) new_duty_left = 100;
+    if (new_duty_left < -100) new_duty_left = -100;
+    if (new_duty_right > 100) new_duty_right = 100;
+    if (new_duty_right < -100) new_duty_right = -100;
+
+    // Use mutex to update the shared duty cycle variables safely
+    xSemaphoreTake(dutyCycleMutex, portMAX_DELAY);
+    duty_cycle_left = new_duty_left;
+    duty_cycle_right = new_duty_right;
+    xSemaphoreGive(dutyCycleMutex);
 }
 
 static void mcpwm_example_gpio_initialize()
@@ -105,27 +114,22 @@ static void set_motor_velocity(
     float right_duty_cycle)
 {
     // Left Motor
-    if (left_duty_cycle > 0) {
-        mcpwm_set_duty(mcpwm_num_left, MCPWM_TIMER_0, MCPWM_OPR_A, left_duty_cycle);
+    if (left_duty_cycle >= 0) {
+        mcpwm_set_duty(mcpwm_num_left, MCPWM_TIMER_0, MCPWM_OPR_A, fabs(left_duty_cycle));
         mcpwm_set_duty(mcpwm_num_left, MCPWM_TIMER_0, MCPWM_OPR_B, 0);
     } else {
         mcpwm_set_duty(mcpwm_num_left, MCPWM_TIMER_0, MCPWM_OPR_A, 0);
-        mcpwm_set_duty(mcpwm_num_left, MCPWM_TIMER_0, MCPWM_OPR_B, left_duty_cycle);
+        mcpwm_set_duty(mcpwm_num_left, MCPWM_TIMER_0, MCPWM_OPR_B, fabs(left_duty_cycle));
     }
 
     // Right Motor
-    if (right_duty_cycle > 0) {
-        mcpwm_set_duty(mcpwm_num_right, MCPWM_TIMER_1, MCPWM_OPR_A, right_duty_cycle);
+    if (right_duty_cycle >= 0) {
+        mcpwm_set_duty(mcpwm_num_right, MCPWM_TIMER_1, MCPWM_OPR_A, fabs(right_duty_cycle));
         mcpwm_set_duty(mcpwm_num_right, MCPWM_TIMER_1, MCPWM_OPR_B, 0);
     } else {
         mcpwm_set_duty(mcpwm_num_right, MCPWM_TIMER_1, MCPWM_OPR_A, 0);
-        mcpwm_set_duty(mcpwm_num_right, MCPWM_TIMER_1, MCPWM_OPR_B, right_duty_cycle);
+        mcpwm_set_duty(mcpwm_num_right, MCPWM_TIMER_1, MCPWM_OPR_B, fabs(right_duty_cycle));
     }
-
-    mcpwm_set_duty_type(mcpwm_num_left, MCPWM_TIMER_0, MCPWM_OPR_A, MCPWM_DUTY_MODE_0);
-    mcpwm_set_duty_type(mcpwm_num_left, MCPWM_TIMER_0, MCPWM_OPR_B, MCPWM_DUTY_MODE_0);
-    mcpwm_set_duty_type(mcpwm_num_right, MCPWM_TIMER_1, MCPWM_OPR_A, MCPWM_DUTY_MODE_0);
-    mcpwm_set_duty_type(mcpwm_num_right, MCPWM_TIMER_1, MCPWM_OPR_B, MCPWM_DUTY_MODE_0);
 }
 
 void motor_controller(void *arg)
@@ -142,19 +146,32 @@ void motor_controller(void *arg)
     mcpwm_init(MCPWM_UNIT_0, MCPWM_TIMER_0, &pwm_config);
     mcpwm_init(MCPWM_UNIT_1, MCPWM_TIMER_1, &pwm_config);
 
+    mcpwm_set_duty_type(MCPWM_UNIT_0, MCPWM_TIMER_0, MCPWM_OPR_A, MCPWM_DUTY_MODE_0);
+    mcpwm_set_duty_type(MCPWM_UNIT_0, MCPWM_TIMER_0, MCPWM_OPR_B, MCPWM_DUTY_MODE_0);
+    mcpwm_set_duty_type(MCPWM_UNIT_1, MCPWM_TIMER_1, MCPWM_OPR_A, MCPWM_DUTY_MODE_0);
+    mcpwm_set_duty_type(MCPWM_UNIT_1, MCPWM_TIMER_1, MCPWM_OPR_B, MCPWM_DUTY_MODE_0);
+
     while (1)
     {
-        set_motor_velocity(MCPWM_UNIT_0, MCPWM_UNIT_1, duty_cycle_left, duty_cycle_right);
-        vTaskDelay(pdMS_TO_TICKS(100));
+        float dc_left, dc_right;
+        // Safely read the duty cycles using the mutex
+        xSemaphoreTake(dutyCycleMutex, portMAX_DELAY);
+        dc_left = duty_cycle_left;
+        dc_right = duty_cycle_right;
+        xSemaphoreGive(dutyCycleMutex);
+
+        set_motor_velocity(MCPWM_UNIT_0, MCPWM_UNIT_1, dc_left, dc_right);
+        vTaskDelay(pdMS_TO_TICKS(20));
     }
 }
 
 void encoder_reader(void *arg)
 {
     uint32_t pcnt_unit_enc_left = 0;   // Pulse counter unit for left encoder
-    uint32_t pcnt_unit_enc_right = 1; // Pulse counter unit for right encoder
+    uint32_t pcnt_unit_enc_right = 1;    // Pulse counter unit for right encoder
 
     // Configure left encoder
+    // Note: The order of the pins may be adjusted depending on your wiring.
     rotary_encoder_config_t config_encoder_left = ROTARY_ENCODER_DEFAULT_CONFIG(
         (rotary_encoder_dev_t)pcnt_unit_enc_left, 14, 27);
     rotary_encoder_t *encoder_left = NULL;
@@ -170,49 +187,74 @@ void encoder_reader(void *arg)
     ESP_ERROR_CHECK(encoder_right->set_glitch_filter(encoder_right, 1));
     ESP_ERROR_CHECK(encoder_right->start(encoder_right));
 
-    // Variables to store encoder counts and time
-    int encoder_left_val = 0, encoder_right_val = 0;
-    int encoder_left_prev_val = 0, encoder_right_prev_val = 0;
+    int encoder_left_prev_val = encoder_left->get_counter_value(encoder_left);
+    int encoder_right_prev_val = encoder_right->get_counter_value(encoder_right);
+    int64_t time_prev = esp_timer_get_time(); // in microseconds
 
-    int64_t time_now = 0, time_prev = 0;
-    float delta_time = 0; // Time difference in seconds
-    float vel_left = 0.0;
-    float vel_right = 0.0;
+    // Variables for accumulating counts over a longer interval for reporting
+    int accumulated_left_ticks = 0;
+    int accumulated_right_ticks = 0;
+    int64_t accumulated_time = 0;
+    const int64_t reporting_interval_us = 100000; // 100ms
 
-    // Buffer for UART logging
     uint8_t data[128];
-
-    // Initial time
-    time_prev = esp_timer_get_time(); // Time in microseconds
 
     while (1)
     {
-        // Read current tick values
-        encoder_left_val = encoder_left->get_counter_value(encoder_left);
-        encoder_right_val = encoder_right->get_counter_value(encoder_right);
+        int encoder_left_val = encoder_left->get_counter_value(encoder_left);
+        int encoder_right_val = encoder_right->get_counter_value(encoder_right);
 
-        // Calculate time difference
-        time_now = esp_timer_get_time(); // Current time in microseconds
-        delta_time = (time_now - time_prev) / 1e6; // Convert to seconds
-
-        // Calculate velocities
-        vel_left = PI * WHEEL_DIAMETER * (float)(encoder_left_val - encoder_left_prev_val) / (TICKS_PER_REV * delta_time);
-        vel_right = -PI * WHEEL_DIAMETER * (float)(encoder_right_val - encoder_right_prev_val) / (TICKS_PER_REV * delta_time);
-
-        // Log distances and velocities via UART
-        int len = sprintf((char *)data, "%.2f,%.2f\n", vel_left, vel_right);
-        uart_write_bytes(UART_NUM, (const char *)data, len);
-
-        // Update previous values
+        int ticks_left = encoder_left_val - encoder_left_prev_val;
+        int ticks_right = encoder_right_val - encoder_right_prev_val;
         encoder_left_prev_val = encoder_left_val;
         encoder_right_prev_val = encoder_right_val;
+
+        int64_t time_now = esp_timer_get_time();
+        int64_t dt_us = time_now - time_prev;
         time_prev = time_now;
 
-        // Wait for 500 ms before the next iteration
-        updatePID(vel_left, vel_right);
-        vTaskDelay(pdMS_TO_TICKS(100));
+        // Accumulate ticks and time for reporting
+        accumulated_left_ticks += ticks_left;
+        accumulated_right_ticks += ticks_right;
+        accumulated_time += dt_us;
+
+        // Use the short interval dt for PID update
+        float dt = dt_us / 1e6f;
+        float vel_left = PI * WHEEL_DIAMETER * ticks_left / (TICKS_PER_REV * dt);
+        float vel_right = -PI * WHEEL_DIAMETER * ticks_right / (TICKS_PER_REV * dt);
+        updatePID(vel_left, vel_right, dt);
+
+        // Report velocity every 100ms based on accumulated counts
+        if (accumulated_time >= reporting_interval_us) {
+            float dt_acc = accumulated_time / 1e6f;
+            float avg_vel_left = PI * WHEEL_DIAMETER * accumulated_left_ticks / (TICKS_PER_REV * dt_acc);
+            float avg_vel_right = -PI * WHEEL_DIAMETER * accumulated_right_ticks / (TICKS_PER_REV * dt_acc);
+            int len = sprintf((char *)data, "%.2f,%.2f\n", avg_vel_left, avg_vel_right);
+            uart_write_bytes(UART_NUM, (const char *)data, len);
+
+            // Reset accumulators
+            accumulated_left_ticks = 0;
+            accumulated_right_ticks = 0;
+            accumulated_time = 0;
+        }
+
+        vTaskDelay(pdMS_TO_TICKS(20)); // Keep control loop fast
     }
 }
+
+// void uart_reader(void *arg)
+// {
+//     uint8_t data[128];
+//     while (1)
+//     {
+//         int len = uart_read_bytes(UART_NUM, data, sizeof(data) - 1, pdMS_TO_TICKS(100));
+//         if (len > 0)
+//         {
+//             data[len] = '\0';
+//             sscanf((char *)data, "%f %f", &setpoint_left, &setpoint_right);
+//         }
+//     }
+// }
 
 void uart_reader(void *arg)
 {
@@ -223,19 +265,35 @@ void uart_reader(void *arg)
         if (len > 0)
         {
             data[len] = '\0';
-            sscanf((char *)data, "%lf %lf", &setpoint_left, &setpoint_right);
+            // Use sscanf with the pattern "<%f %f>" to extract the two float values.
+            if (sscanf((char *)data, "<%f %f>", &setpoint_left, &setpoint_right) == 2)
+            {
+                // Successfully parsed the two velocities.
+            }
+            // else
+            // {
+            //     // Parsing failed; optionally, log or handle the error.
+            // }
         }
     }
 }
 
 void app_main(void)
 {
+    // Create the mutex before tasks start using it
+    dutyCycleMutex = xSemaphoreCreateMutex();
+    if (dutyCycleMutex == NULL) {
+        printf("Error creating dutyCycleMutex\n");
+        return;
+    }
+    
     uart_config_t uart_config = {
         .baud_rate = 115200,
         .data_bits = UART_DATA_8_BITS,
         .parity = UART_PARITY_DISABLE,
         .stop_bits = UART_STOP_BITS_1,
-        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE};
+        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE
+    };
     uart_param_config(UART_NUM, &uart_config);
     uart_driver_install(UART_NUM, BUF_SIZE, BUF_SIZE, 0, NULL, 0);
 

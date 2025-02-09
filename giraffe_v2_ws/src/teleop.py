@@ -49,8 +49,8 @@ class DiffDriveSerial(Node):
         self.last_cmd_time = time.time()
 
         # Timer to check for cmd_vel timeout and read odometry
-        self.create_timer(0.1, self.check_cmd_vel_timeout)
-        self.create_timer(0.1, self.read_odometry)
+        self.create_timer((1/30), self.check_cmd_vel_timeout)
+        self.create_timer((1/30), self.read_odometry)
 
     def cmd_vel_callback(self, msg):
         """Callback function to process cmd_vel and send wheel speeds over serial."""
@@ -82,7 +82,7 @@ class DiffDriveSerial(Node):
         """Check if no cmd_vel message is received and decelerate to zero."""
         current_time = time.time()
         dt = current_time - self.last_time
-        timeout = 0.1  # Timeout duration in seconds
+        timeout = 2/30  # Timeout duration in seconds
 
         if current_time - self.last_cmd_time > timeout:
             linear_x = max(self.last_linear_x - self.max_linear_accel * dt, 0.0) if self.last_linear_x > 0 else min(self.last_linear_x + self.max_linear_accel * dt, 0.0)
@@ -114,10 +114,11 @@ class DiffDriveSerial(Node):
         left_wheel_vel = (linear_x - (angular_z * self.base_width / 2))
         right_wheel_vel = (linear_x + (angular_z * self.base_width / 2))
 
-        cmd = f"{left_wheel_vel:.2f} {right_wheel_vel:.2f}\n"
+        cmd = f"<{left_wheel_vel:.1f} {right_wheel_vel:.1f}>"
 
         if self.ser:
             self.ser.write(cmd.encode())
+            self.ser.flush()
             self.get_logger().info(f"Sent to serial: {cmd.strip()}")
         else:
             self.get_logger().warn(f"❌ Serial port not available, vel: {cmd}")
