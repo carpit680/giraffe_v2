@@ -1,10 +1,11 @@
 import rclpy
 from rclpy.node import Node
-from geometry_msgs.msg import Twist, Quaternion
+from geometry_msgs.msg import Twist, Quaternion, TransformStamped
 from nav_msgs.msg import Odometry
 import serial
 import time
 import math
+import tf2_ros
 
 class DiffDriveSerial(Node):
     def __init__(self):
@@ -18,8 +19,11 @@ class DiffDriveSerial(Node):
             10  # Queue size
         )
 
-        # NEW: Odometry publisher on /raw_odom topic
+        # Odometry publisher on /raw_odom topic
         self.odom_publisher = self.create_publisher(Odometry, '/raw_odom', 10)
+
+        # TF Broadcaster to publish transform from raw_odom to base_link_real
+        self.tf_broadcaster = tf2_ros.TransformBroadcaster(self)
 
         # Serial Communication Setup
         self.serial_port = "/dev/ttyUSB1"
@@ -62,7 +66,7 @@ class DiffDriveSerial(Node):
         self.create_timer(1/30, self.read_odometry)
 
     def cmd_vel_callback(self, msg):
-        """Callback to process cmd_vel and send wheel speeds over serial."""
+        """Process cmd_vel and send wheel speeds over serial."""
         current_time = time.time()
         self.last_cmd_time = current_time
 
@@ -130,12 +134,13 @@ class DiffDriveSerial(Node):
         """
         Read odometry data from the motor controller over serial.
         The controller sends wheel velocities (left and right in m/s) as a string.
-        This function integrates these velocities to update the robot's pose and publishes an Odometry message.
+        This function integrates these velocities to update the robot's pose, publishes an Odometry message,
+        and broadcasts a TF transform from 'raw_odom' to 'base_link_real'.
         """
         if self.ser:
             data = self.ser.readline().decode().strip()
             if data:
-                # self.get_logger().info(f"Raw odometry data: {data}")
+                self.get_logger().info(f"Raw odometry data: {data}")
                 try:
                     # Replace commas with spaces and split into two values
                     data = data.replace(',', ' ')
@@ -160,24 +165,31 @@ class DiffDriveSerial(Node):
                     qw = math.cos(self.yaw / 2.0)
                     odom_quat = Quaternion(x=0.0, y=0.0, z=qz, w=qw)
 
-                    # Build the Odometry message
+                    # Build and publish the Odometry message
                     odom_msg = Odometry()
                     odom_msg.header.stamp = self.get_clock().now().to_msg()
                     odom_msg.header.frame_id = 'odom'
                     odom_msg.child_frame_id = 'base_link_real'
-
-                    # Set the position and orientation
                     odom_msg.pose.pose.position.x = self.x
                     odom_msg.pose.pose.position.y = self.y
                     odom_msg.pose.pose.position.z = 0.0
                     odom_msg.pose.pose.orientation = odom_quat
-
-                    # Set the velocities
                     odom_msg.twist.twist.linear.x = linear_vel
                     odom_msg.twist.twist.angular.z = angular_vel
 
-                    # Publish the odometry message
                     self.odom_publisher.publish(odom_msg)
+
+                    # Broadcast the TF transform from raw_odom to base_link_real
+                    t = TransformStamped()
+                    t.header.stamp = self.get_clock().now().to_msg()
+                    t.header.frame_id = 'raw_odom'
+                    t.child_frame_id = 'base_link_real'
+                    t.transform.translation.x = self.x
+                    t.transform.translation.y = self.y
+                    t.transform.translation.z = 0.0
+                    t.transform.rotation = odom_quat
+
+                    self.tf_broadcaster.sendTransform(t)
                 except ValueError:
                     self.get_logger().warn(f"⚠️ Invalid odometry data received: {data}")
 
@@ -185,12 +197,10 @@ class DiffDriveSerial(Node):
         """Calculate and send wheel velocities over serial."""
         left_wheel_vel = linear_x - (angular_z * self.base_width / 2)
         right_wheel_vel = linear_x + (angular_z * self.base_width / 2)
-        # Format the command with start and end markers.
         cmd = f"<{left_wheel_vel:.1f} {right_wheel_vel:.1f}>"
         if self.ser:
             self.ser.write(cmd.encode())
             self.ser.flush()
-            # self.get_logger().info(f"Sent to serial: {cmd.strip()}")
         else:
             self.get_logger().warn(f"❌ Serial port not available, vel: {cmd}")
 
