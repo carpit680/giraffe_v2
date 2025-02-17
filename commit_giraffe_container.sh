@@ -2,7 +2,7 @@
 
 # Define container name and image name
 CONTAINER_NAME="giraffe_container"
-IMAGE_NAME="giraffe_ros2_backup"
+IMAGE_NAME="giraffe_backup"
 
 # Get the current date and time for versioning
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")

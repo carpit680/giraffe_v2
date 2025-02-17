@@ -2,16 +2,7 @@
 
 # Define container name and base image name
 CONTAINER_NAME="giraffe_container"
-IMAGE_NAME="giraffe_backup"
-
-# Find the latest committed image
-LATEST_IMAGE=$(sudo docker images --format "{{.Repository}}:{{.Tag}}" | grep "$IMAGE_NAME" | sort -r | head -n 1)
-
-# Check if an image exists
-if [ -z "$LATEST_IMAGE" ]; then
-    echo "❌ No committed images found for $IMAGE_NAME. Please run commit_giraffe_container.sh first."
-    exit 1
-fi
+IMAGE_NAME="37a8e4b57ac3"
 
 # Check if the container already exists and remove it
 if sudo docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
@@ -20,12 +11,12 @@ if sudo docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
     sudo docker rm $CONTAINER_NAME >/dev/null 2>&1
 fi
 
-echo "🚀 Running the latest committed image: $LATEST_IMAGE"
+echo "🚀 Running container with a new image: $IMAGE_NAME"
 
 # Run the latest container in the background with restart policy
 sudo docker run -it -d --restart unless-stopped \
     --runtime=nvidia \
-    --gpus all \
+   --gpus all \
     --network host \
     --privileged \
     --ipc=host \
@@ -43,9 +34,8 @@ sudo docker run -it -d --restart unless-stopped \
     --volume /dev/bus/usb:/dev/bus/usb \
     --volume /home/$USER:/home/$USER \
     --name $CONTAINER_NAME \
-    $LATEST_IMAGE
+    $IMAGE_NAME
 #    --volume /etc/localtime:/etc/localtime:ro \
-
 echo "✅ Giraffe container is now running in the background."
 echo "🔗 Run ./attach_giraffe_container.sh to attach to it."
 echo "🔄 This container will automatically restart after a reboot unless manually stopped."
